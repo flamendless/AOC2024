@@ -9,9 +9,10 @@ import (
 	"strings"
 )
 
-func checkSafe(tokens []string) bool {
+func checkSafe(tokens []string) (bool, int) {
 	isSafe := true
 	dir := 0
+	unsafeIdx := 0
 
 	for i := 0; i < len(tokens)-1; i++ {
 		left := tokens[i]
@@ -29,12 +30,14 @@ func checkSafe(tokens []string) bool {
 		diff := abs(l - r)
 		if diff < 1 || diff > 3 {
 			isSafe = false
+			unsafeIdx = i
 			break
 		}
 
 		if l < r {
 			if dir == -1 {
 				isSafe = false
+				unsafeIdx = i
 				break
 			}
 			dir = 1
@@ -43,13 +46,21 @@ func checkSafe(tokens []string) bool {
 		if l > r {
 			if dir == 1 {
 				isSafe = false
+				unsafeIdx = i
 				break
 			}
 			dir = -1
 		}
 	}
 
-	return isSafe
+	return isSafe, unsafeIdx
+}
+
+func checkSafeAgain(tokens []string, i int) bool {
+	newTokens := slices.Clone(tokens)
+	newTokens = slices.Delete(newTokens, i, i+1)
+	nowSafe, _ := checkSafe(newTokens)
+	return nowSafe
 }
 
 func main() {
@@ -68,15 +79,18 @@ func main() {
 		line = strings.TrimSuffix(line, "\n")
 		tokens := strings.Split(line, " ")
 
-		isSafe := checkSafe(tokens)
+		isSafe, unsafeIdx := checkSafe(tokens)
+		isSafe = checkSafeAgain(tokens, 0)
 		if !isSafe {
-			for i := 0; i < len(tokens); i++ {
-				newTokens := slices.Clone(tokens)
-				newTokens = slices.Delete(newTokens, i, i+1)
-				if checkSafe(newTokens) {
-					isSafe = true
-					break
-				}
+			isSafe = checkSafeAgain(tokens, unsafeIdx)
+			if isSafe {
+				answer += 1
+				continue
+			}
+			isSafe = checkSafeAgain(tokens, unsafeIdx+1)
+			if isSafe {
+				answer += 1
+				continue
 			}
 		}
 
